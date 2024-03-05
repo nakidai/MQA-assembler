@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Any
+from copy import deepcopy
 
 
 class AsmTypes(Enum):
@@ -93,7 +94,7 @@ class Macro:
         return self
 
     def __copy__(self):
-        return Macro(self.name, self.args, self.body)
+        return Macro(self.name, deepcopy(self.args), deepcopy(self.body))
 
     def __repr__(self):
         return f"{{{self.name}({self.args})}}"
