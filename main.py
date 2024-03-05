@@ -4,7 +4,7 @@ from src import Compiler
 
 
 parser = argparse.ArgumentParser(description="Compiles Mini Quantum CPU source files.")
-parser.add_argument("-i", "--input", type=str, help="source file", required=True)
+parser.add_argument("input", type=str, help="source file")
 parser.add_argument("-o", "--output", type=str, help="output file")
 parser.add_argument("--json", help="creates a blueprint for Scrap Mechanic", action="store_true")
 parser.add_argument("--byte", help="outputs the bytecode, executable for mqe", action="store_true")
