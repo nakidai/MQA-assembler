@@ -81,6 +81,11 @@ class Tokenizer:
                     token = ""
                 self._token_tree.append(Token(char, code_line))
 
+            # odd case with brackets
+            elif char == "\n" and len(self._token_tree) > 0:
+                if self._token_tree[-1].token in "({[]})":
+                    self._token_tree.append(Token(char, code_line))
+
             # anything else
             elif char != " " and char != "\n":
                 token += char
