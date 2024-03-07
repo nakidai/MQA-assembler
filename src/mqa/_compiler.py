@@ -65,9 +65,10 @@ class Compiler(InstructionSet):
         :return:
         """
 
-        # NOTE: this needs to be *changed*, as it's very odd to do it that way
-        tokenizer = Tokenizer(code)
-        token_tree = tokenizer.token_tree
+        # make a token tree
+        token_tree = Tokenizer.build_token_tree(
+            Tokenizer.tokenize(code)
+        )
 
         try:
             compiled = self._compile(token_tree)
