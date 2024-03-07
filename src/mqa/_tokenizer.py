@@ -215,6 +215,7 @@ class Tokenizer:
             # if we are inside a comment
             if char == ";":
                 is_commented = True
+                continue
 
             # if we hit a newline
             if char == "\n":
@@ -223,6 +224,7 @@ class Tokenizer:
                     token_list.append(Token(token_str, dummy[0]))
                     token_str = ""
                 token_list.append(Token("\n", dummy[0]))
+                continue
 
             # skip this part of the code if it's commented
             if is_commented:
@@ -244,5 +246,13 @@ class Tokenizer:
             # otherwise just add it to token string
             else:
                 token_str += char
+
+        # delete the repeating newlines
+        pointer = 0
+        while pointer < (len(token_list) - 1):
+            if token_list[pointer] == token_list[pointer + 1] == "\n":
+                token_list.pop(pointer)
+                pointer -= 1
+            pointer += 1
 
         return token_list
