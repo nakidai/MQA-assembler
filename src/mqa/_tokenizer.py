@@ -189,14 +189,24 @@ from typing import Any
 
 
 class Tokenizer:
+    """
+    Tokenizer class, which specializes on working with mainly the individual characters of the source code.
+    """
+
     @staticmethod
     def tokenize(code: str):
+        """
+        Splits the input code string into a list of tokens, which then can be used to construct a token tree
+        :param code: code string
+        :return: list of tokens
+        """
+
         # character pointer
         dummy = [-1]
 
         # next char function
-        def next_char(offset=1) -> str | None:
-            dummy[0] += offset
+        def next_char() -> str | None:
+            dummy[0] += 1
             if dummy[0] >= len(code):
                 return None
             return code[dummy[0]]
@@ -256,3 +266,29 @@ class Tokenizer:
             pointer += 1
 
         return token_list
+
+    @staticmethod
+    def build_token_tree(token_list: list[Token]):
+        """
+        Builds a tree of tokens.
+        This function is called recursively.
+        :param token_list: list of tokens
+        :return: hierarchical token structure
+        """
+
+        # token tree
+        token_tree: list[list[Token] | Token] = []
+
+        # token pointer
+        dummy = [-1]
+
+        # token fetching function
+        def next_token() -> Token | None:
+            dummy[0] += 1
+            if dummy[0] >= len(token_list):
+                return None
+            return token_list[dummy[0]]
+
+        # make a tree
+        while (token := next_token()) is not None:
+            pass
