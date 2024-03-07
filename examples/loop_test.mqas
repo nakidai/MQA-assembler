@@ -1,0 +1,41 @@
+; This is a simple program which will loop for ~2**21 times (2097152)
+
+macro subtract_multi(arg1, arg2) {
+    LRA arg1
+    SBC arg2
+    SRA arg1
+}
+
+_start:
+    LRA 255
+    SRA $0
+    SRA $1
+    LRA 31
+    SRA $2
+
+    ; value loaded will look like this in memory
+    ;      2           1           0      | address in memory
+    ; [0001 1111] [1111 1111] [1111 1111] | data
+
+loop:
+    ; perform a multibyte subtraction (starting from lower bytes)
+    subtract_multi($0, 1)
+    subtract_multi($1, 0)
+    subtract_multi($2, 0)
+
+    ; just to be safe
+    CCF
+
+    ; check highest byte if it's positive
+    LRA $2
+    JMPP $loop
+
+    ; check lowest byte, if it's positive
+    LRA $0
+    JMPP $loop
+
+    ; if none of them are positive, that means our number is 0
+    JMP $_end
+
+_end:
+    HALT
