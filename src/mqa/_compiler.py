@@ -118,6 +118,38 @@ class Compiler:
         return labels
 
     @staticmethod
+    def get_label_pointers(instruction_list: list[list[Token] | Label]):
+        """
+        Used at final step of the compilation. Modifies the token_tree, to remove labels
+        :param instruction_list: tree of tokens
+        :return: table of label pointer
+        """
+
+        # label pointers
+        # label id -> label index in the instruction list
+        label_pointer: dict[int, int] = {}
+
+        # label offset
+        label_offset = 0
+
+        # instruction pointer
+        instruction_ptr = [-1]
+
+        # instruction fetching function
+        def next_instruction() -> list[Token] | Label | None:
+            instruction_ptr[0] += 1
+            if instruction_ptr[0] >= len(instruction_list):
+                return None
+            return instruction_list[instruction_ptr[0]]
+
+        # go through all instructions and finalize the compilation
+        while (instruction := next_instruction()) is not None:
+            if not isinstance(instruction, Label):
+                continue
+
+
+
+    @staticmethod
     def compile(token_tree: list[list[Token] | Token]):
         """
         Compiles the token_tree.
@@ -147,6 +179,11 @@ class Compiler:
             # labels
             if isinstance(token, Label):
                 instruction_list.append(token)
+                continue
+
+            # if it's a newline
+            if token.token == "\n":
+                continue
 
             # instruction mnemonic token
             if token.token in InstructionSet.instruction_set:
@@ -176,5 +213,9 @@ class Compiler:
                 macro = macros[macro_name][len(macro_args)].__copy__()
                 macro.put_args(*macro_args)
                 instruction_list += macro.body
+
+            # otherwise raise a name error
+            else:
+                raise NameError(f"Undefined instruction word '{token}'")
 
         return instruction_list
