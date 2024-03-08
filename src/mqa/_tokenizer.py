@@ -77,6 +77,10 @@ class Tokenizer:
             else:
                 token_str += char
 
+        if token_str != "":
+            token_list.append(Token(token_str, line_number))
+            token_list.append(Token("\n", line_number))
+
         # delete the repeating newlines
         pointer = 0
         while pointer < (len(token_list) - 1):
