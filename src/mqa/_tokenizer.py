@@ -18,14 +18,14 @@ class Tokenizer:
         """
 
         # character pointer
-        dummy = [-1]
+        char_ptr = [-1]
 
         # next char function
         def next_char() -> str | None:
-            dummy[0] += 1
-            if dummy[0] >= len(code):
+            char_ptr[0] += 1
+            if char_ptr[0] >= len(code):
                 return None
-            return code[dummy[0]]
+            return code[char_ptr[0]]
 
         # token list (not a tree yet)
         token_list: list[Token] = []
@@ -104,14 +104,14 @@ class Tokenizer:
         token_tree: list[list[Token] | Token] = []
 
         # token pointer
-        dummy = [-1]
+        token_ptr = [-1]
 
         # token fetching function
         def next_token() -> Token | None:
-            dummy[0] += 1
-            if dummy[0] >= len(token_list):
+            token_ptr[0] += 1
+            if token_ptr[0] >= len(token_list):
                 return None
-            return token_list[dummy[0]]
+            return token_list[token_ptr[0]]
 
         # make a tree
         while (token := next_token()) is not None:

@@ -17,14 +17,14 @@ class Compiler:
         macros: dict[str, dict[int, Macro]] = {}
 
         # token pointer
-        dummy = [-1]
+        token_ptr = [-1]
 
         # token fetching function
         def next_token() -> list[Token] | Token | None:
-            dummy[0] += 1
-            if dummy[0] >= len(token_tree):
+            token_ptr[0] += 1
+            if token_ptr[0] >= len(token_tree):
                 return None
-            return token_tree[dummy[0]]
+            return token_tree[token_ptr[0]]
 
         # go through each token and make macros
         while (token := next_token()) is not None:
@@ -40,11 +40,11 @@ class Compiler:
                 macro_body = next_token()
 
                 # get rid of macro define
-                dummy[0] -= 3
-                token_tree.pop(dummy[0])
-                token_tree.pop(dummy[0])
-                token_tree.pop(dummy[0])
-                token_tree.pop(dummy[0])
+                token_ptr[0] -= 3
+                token_tree.pop(token_ptr[0])
+                token_tree.pop(token_ptr[0])
+                token_tree.pop(token_ptr[0])
+                token_tree.pop(token_ptr[0])
 
                 # check if macro name is a token, and not a string
                 if not isinstance(macro_name, Token):
@@ -88,14 +88,14 @@ class Compiler:
         labels: dict[str, Label] = {}
 
         # token pointer
-        dummy = [-1]
+        token_ptr = [-1]
 
         # token fetching function
         def next_token() -> list[Token] | Token | None:
-            dummy[0] += 1
-            if dummy[0] >= len(token_tree):
+            token_ptr[0] += 1
+            if token_ptr[0] >= len(token_tree):
                 return None
-            return token_tree[dummy[0]]
+            return token_tree[token_ptr[0]]
 
         # go through tokens and find labels
         while (token := next_token()) is not None:
@@ -113,14 +113,14 @@ class Compiler:
                 labels[label_name] = label_class
 
                 # this may cause problems (?)
-                token_tree[dummy[0]] = label_class
+                token_tree[token_ptr[0]] = label_class
 
         return labels
 
     @staticmethod
     def compile(token_tree: list[list[Token] | Token]):
         """
-        Compiles the token_tree
+        Compiles the token_tree.
         :param token_tree: tree of tokens
         :return: list of instructions
         """
@@ -133,14 +133,14 @@ class Compiler:
         instruction_list = []
 
         # token pointer
-        dummy = [-1]
+        token_ptr = [-1]
 
         # token fetching function
         def next_token() -> list[Token] | Token | None:
-            dummy[0] += 1
-            if dummy[0] >= len(token_tree):
+            token_ptr[0] += 1
+            if token_ptr[0] >= len(token_tree):
                 return None
-            return token_tree[dummy[0]]
+            return token_tree[token_ptr[0]]
 
         # go through tokens and compile the code
         while (token := next_token()) is not None:
