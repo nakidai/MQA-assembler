@@ -2,7 +2,7 @@ from .asm_types import *
 from .mqis import *
 
 
-class Compiler:
+class Compiler(InstructionSet):
     @staticmethod
     def die(message: str, traceback: int, exception):
         raise exception(f"{message}\n  line {traceback}")
@@ -137,10 +137,11 @@ class Compiler:
         return labels
 
     @classmethod
-    def compile(cls, token_tree: list[list[Token] | Token], scope="main"):
+    def compile(cls, token_tree: list[list[Token] | Token], scope="main") -> list[list[Token | Argument]]:
         """
         Compiles the token_tree.
         :param token_tree: tree of tokens
+        :param scope: scope which is being compiled. Default = main
         :return: list of instructions
         """
 
@@ -173,7 +174,7 @@ class Compiler:
                 continue
 
             # instruction mnemonic token
-            if token.token in InstructionSet.instruction_set:
+            if token.token in cls.instruction_set:
                 instruction_word = [token]
                 while (instruction_token := next_token()).token != "\n":
                     instruction_word.append(instruction_token)
@@ -214,10 +215,7 @@ class Compiler:
 
         # label pointers
         # label id -> label index in the instruction list
-        label_pointer: dict[int, int] = {id(x): idx for idx, x in enumerate(instruction_list) if isinstance(x, Label)}
-
-        # label offset
-        label_offset = 0
+        label_pointer: dict[int, int] = {}
 
         # instruction pointer
         instruction_ptr = [-1]
@@ -229,13 +227,18 @@ class Compiler:
                 return None
             return instruction_list[instruction_ptr[0]]
 
-        # go through all instructions and finalize the compilation
+        # go through all instructions, find & remove labels
         while (instruction := next_instruction()) is not None:
             if isinstance(instruction, Label):
+                label_pointer[id(instruction)] = instruction_ptr[0]
                 instruction_list.pop(instruction_ptr[0])
                 instruction_ptr[0] -= 1
-                continue
 
+        # reset instruction pointer
+        instruction_ptr[0] = -1
+
+        # go through all instructions and finalize the compilation
+        while (instruction := next_instruction()) is not None:
             for token_idx, token in enumerate(instruction):
                 # skip mnemonics
                 if token_idx == 0:
@@ -254,3 +257,48 @@ class Compiler:
                     instruction[token_idx] = Argument(int(token.token), AsmTypes.INTEGER)
 
         return instruction_list
+
+    @classmethod
+    def get_bytecode(cls, instruction_list: list[list[Token | Argument]]) -> bytes:
+        """
+        Translates the instruction list into bytes
+        :param instruction_list: list of instructions
+        :return: bytes
+        """
+
+        # list of instruction bytes
+        byte_code: bytes = bytes()
+
+        for instruction in instruction_list:
+            # decode the instruction
+            opcode = cls.instruction_set[instruction[0].token]
+
+            # if the instruction has any arguments (ex. LRA 10, argument 10)
+            # decode data and memory_flag
+            if len(instruction) > 1:
+                data = instruction[1].value
+                memory_flag = 1 if instruction[1].type is AsmTypes.POINTER else 0
+
+            # else, data and memory_flag are 0
+            else:
+                data = 0
+                memory_flag = 0
+
+            # instruction consists of 3 parts
+            # memory_flag   - 1 bit
+            # data          - 8 bits
+            # opcode        - 7 bits
+            # ==========================
+            # total         - 16 bits
+
+            # make instruction one 16 bit value
+            value = (memory_flag << 15) + (data << 7) + opcode
+
+            # bytes are 8 bits, so, split the value into 2 bytes
+            value_high = (value & 0b1111_1111_0000_0000) >> 8
+            value_low = value & 0b0000_0000_1111_1111
+
+            # append 2 bytes to the list
+            byte_code += bytes([value_high, value_low])
+
+        return byte_code

@@ -1,6 +1,6 @@
 import os
 import argparse
-from src import Compiler
+from src import Compiler, Tokenizer
 
 
 parser = argparse.ArgumentParser(description="Compiles Mini Quantum CPU source files.")
@@ -9,6 +9,20 @@ parser.add_argument("-o", "--output", type=str, help="output file")
 parser.add_argument("--json", help="creates a blueprint for Scrap Mechanic", action="store_true")
 parser.add_argument("--byte", help="outputs the bytecode, executable for mqe", action="store_true")
 args = parser.parse_args()
+
+
+def code_compile(code: str):
+    """
+    Compiles the given code.
+    :param code: code string
+    :return: instruction list
+    """
+
+    token_list = Tokenizer.tokenize(code)
+    token_tree = Tokenizer.build_token_tree(token_list)
+    instruction_list = Compiler.compile(token_tree)
+
+    return instruction_list
 
 
 def die(message=None):
@@ -30,10 +44,7 @@ def main():
         code = file.read()
 
     # compilation
-    compiler = Compiler()
-    instruction_list = compiler.compile(code)
-    if instruction_list is None:
-        die()
+    instruction_list = code_compile(code)
 
     # file creation
     output_filename = args.output
@@ -53,7 +64,7 @@ def main():
     if args.byte:
         # write bytes to a file
         with open(output_filename, "wb") as file:
-            file.write(compiler.get_bytecode(instruction_list))
+            file.write(Compiler.get_bytecode(instruction_list))
     else:
         # write instructions to a file
         with open(output_filename, "w", encoding="utf8") as file:
