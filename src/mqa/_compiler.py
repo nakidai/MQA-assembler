@@ -457,13 +457,46 @@ class Compiler(InstructionSet):
         return macros
 
     @staticmethod
-    def get_scope_labels(token_tree: list[list[Token] | Token]):
+    def get_scope_labels(token_tree: list[list[Token] | Token]) -> dict[str, Label]:
         """
-        Returns a table of labels
+        Returns a table of labels. Modifies the token tree to preserve unique labels
         Not recursive
         :param token_tree: 
         :return:
         """
+
+        # table of labels
+        labels: dict[str, Label] = {}
+
+        # token pointer
+        dummy = [-1]
+
+        # token fetching function
+        def next_token() -> list[Token] | Token | None:
+            dummy[0] += 1
+            if dummy[0] >= len(token_tree):
+                return None
+            return token_tree[dummy[0]]
+
+        # go through tokens and find labels
+        while (token := next_token()) is not None:
+            # skip sub-lists
+            if isinstance(token, list):
+                continue
+
+            # check if it's a label
+            if token.token[-1] == ":":
+                label_name = token.token[:-1]
+                if label_name in labels:
+                    print(f"WARN: redefining existing label '{label_name}'")
+
+                label_class = Label(label_name, token.traceback)
+                labels[label_name] = label_class
+
+                # this may cause problems (?)
+                token_tree[dummy[0]] = label_class
+
+        return labels
 
     @staticmethod
     def compile(token_tree: list[list[Token] | Token]):
