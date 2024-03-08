@@ -30,6 +30,9 @@ class Tokenizer:
         # token list (not a tree yet)
         token_list: list[Token] = []
 
+        # on which line of the code the pointer is
+        line_number = 0
+
         # if we are inside a comment
         is_commented = False
 
@@ -45,11 +48,12 @@ class Tokenizer:
 
             # if we hit a newline
             if char == "\n":
+                line_number += 1
                 is_commented = False
                 if token_str != "":
-                    token_list.append(Token(token_str, dummy[0]))
+                    token_list.append(Token(token_str, line_number))
                     token_str = ""
-                token_list.append(Token("\n", dummy[0]))
+                token_list.append(Token("\n", line_number))
                 continue
 
             # skip this part of the code if it's commented
@@ -59,15 +63,15 @@ class Tokenizer:
             # if a character is a space or a comma
             if char == " " or char == ",":
                 if token_str != "":
-                    token_list.append(Token(token_str, dummy[0]))
+                    token_list.append(Token(token_str, line_number))
                     token_str = ""
 
             # if a character is a bracket
             elif char in "[]{}()":
                 if token_str != "":
-                    token_list.append(Token(token_str, dummy[0]))
+                    token_list.append(Token(token_str, line_number))
                     token_str = ""
-                token_list.append(Token(char, dummy[0]))
+                token_list.append(Token(char, line_number))
 
             # otherwise just add it to token string
             else:
