@@ -4,7 +4,11 @@ from .mqis import *
 
 class Compiler:
     @staticmethod
-    def process_scope_macros(token_tree: list[list[Token] | Token]) -> dict[str, dict[int, Macro]]:
+    def die(message: str, traceback: int, exception):
+        raise exception(f"{message}\n  line {traceback}")
+
+    @classmethod
+    def process_scope_macros(cls, token_tree: list[list[Token] | Token]) -> dict[str, dict[int, Macro]]:
         """
         Returns a table of this scope's macros (with macro overloading). Modifies the token tree to delete
         already defined macros.
@@ -70,13 +74,13 @@ class Compiler:
                 macros[macro_name.token][len(macro_args)] = Macro(
                     name=macro_name.token,
                     args=macro_args,
-                    body=Compiler.compile(macro_body)
+                    body=cls.compile(macro_body, "macro")
                 )
 
         return macros
 
-    @staticmethod
-    def process_scope_labels(token_tree: list[list[Token] | Token]) -> dict[str, Label]:
+    @classmethod
+    def process_scope_labels(cls, token_tree: list[list[Token] | Token]) -> dict[str, Label]:
         """
         Returns a table of labels. Modifies the token tree to preserve unique labels
         Not recursive
@@ -126,12 +130,14 @@ class Compiler:
 
             if token.token[0] == "$":
                 if not token.token[1].isdigit():
+                    if token.token[1:] not in labels:
+                        raise NameError(f"Undefined label '{token}'")
                     token_tree[token_ptr[0]] = labels[token.token[1:]]
 
         return labels
 
-    @staticmethod
-    def compile(token_tree: list[list[Token] | Token]):
+    @classmethod
+    def compile(cls, token_tree: list[list[Token] | Token], scope="main"):
         """
         Compiles the token_tree.
         :param token_tree: tree of tokens
@@ -139,8 +145,8 @@ class Compiler:
         """
 
         # labels and macros
-        labels = Compiler.process_scope_labels(token_tree)
-        macros = Compiler.process_scope_macros(token_tree)
+        labels = cls.process_scope_labels(token_tree)
+        macros = cls.process_scope_macros(token_tree)
 
         # instruction list
         instruction_list = []
@@ -198,5 +204,53 @@ class Compiler:
             # otherwise raise a name error
             else:
                 raise NameError(f"Undefined instruction word '{token}'")
+
+        # if we are processing the macro => we are done here
+        if scope != "main":
+            return instruction_list
+
+        # otherwise => final step of compilation
+        instruction_list: list[list[Token | Argument] | Label]
+
+        # label pointers
+        # label id -> label index in the instruction list
+        label_pointer: dict[int, int] = {id(x): idx for idx, x in enumerate(instruction_list) if isinstance(x, Label)}
+
+        # label offset
+        label_offset = 0
+
+        # instruction pointer
+        instruction_ptr = [-1]
+
+        # instruction fetching function
+        def next_instruction() -> list[Token | Argument] | Label | None:
+            instruction_ptr[0] += 1
+            if instruction_ptr[0] >= len(instruction_list):
+                return None
+            return instruction_list[instruction_ptr[0]]
+
+        # go through all instructions and finalize the compilation
+        while (instruction := next_instruction()) is not None:
+            if isinstance(instruction, Label):
+                instruction_list.pop(instruction_ptr[0])
+                instruction_ptr[0] -= 1
+                continue
+
+            for token_idx, token in enumerate(instruction):
+                # skip mnemonics
+                if token_idx == 0:
+                    continue
+
+                # if it's a label pointer
+                if isinstance(token, Label):
+                    instruction[token_idx] = Argument(label_pointer[id(token)], AsmTypes.INTEGER)
+                    continue
+
+                # some kind of pointer
+                if token.token[0] == "$":
+                    if token.token[1].isdigit():
+                        instruction[token_idx] = Argument(int(token.token[1:]), AsmTypes.POINTER)
+                else:
+                    instruction[token_idx] = Argument(int(token.token), AsmTypes.INTEGER)
 
         return instruction_list
