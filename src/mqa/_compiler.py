@@ -4,7 +4,7 @@ from .mqis import *
 
 class Compiler:
     @staticmethod
-    def get_scope_macros(token_tree: list[list[Token] | Token]) -> dict[str, dict[int, Macro]]:
+    def process_scope_macros(token_tree: list[list[Token] | Token]) -> dict[str, dict[int, Macro]]:
         """
         Returns a table of this scope's macros (with macro overloading). Modifies the token tree to delete
         already defined macros.
@@ -76,7 +76,7 @@ class Compiler:
         return macros
 
     @staticmethod
-    def get_scope_labels(token_tree: list[list[Token] | Token]) -> dict[str, Label]:
+    def process_scope_labels(token_tree: list[list[Token] | Token]) -> dict[str, Label]:
         """
         Returns a table of labels. Modifies the token tree to preserve unique labels
         Not recursive
@@ -115,39 +115,20 @@ class Compiler:
                 # this may cause problems (?)
                 token_tree[token_ptr[0]] = label_class
 
-        return labels
+        # reset token pointer
+        token_ptr[0] = -1
 
-    @staticmethod
-    def get_label_pointers(instruction_list: list[list[Token] | Label]):
-        """
-        Used at final step of the compilation. Modifies the token_tree, to remove labels
-        :param instruction_list: tree of tokens
-        :return: table of label pointer
-        """
-
-        # label pointers
-        # label id -> label index in the instruction list
-        label_pointer: dict[int, int] = {}
-
-        # label offset
-        label_offset = 0
-
-        # instruction pointer
-        instruction_ptr = [-1]
-
-        # instruction fetching function
-        def next_instruction() -> list[Token] | Label | None:
-            instruction_ptr[0] += 1
-            if instruction_ptr[0] >= len(instruction_list):
-                return None
-            return instruction_list[instruction_ptr[0]]
-
-        # go through all instructions and finalize the compilation
-        while (instruction := next_instruction()) is not None:
-            if not isinstance(instruction, Label):
+        # go through tokens and process label pointers
+        while (token := next_token()) is not None:
+            # skip sub-lists
+            if isinstance(token, list):
                 continue
 
+            if token.token[0] == "$":
+                if not token.token[1].isdigit():
+                    token_tree[token_ptr[0]] = labels[token.token[1:]]
 
+        return labels
 
     @staticmethod
     def compile(token_tree: list[list[Token] | Token]):
@@ -158,8 +139,8 @@ class Compiler:
         """
 
         # labels and macros
-        labels = Compiler.get_scope_labels(token_tree)
-        macros = Compiler.get_scope_macros(token_tree)
+        labels = Compiler.process_scope_labels(token_tree)
+        macros = Compiler.process_scope_macros(token_tree)
 
         # instruction list
         instruction_list = []
