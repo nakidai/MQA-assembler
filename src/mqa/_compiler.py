@@ -1,5 +1,5 @@
-from .asm_types import *
-from .mqis import *
+from ._asm_types import *
+from ._mqis import *
 
 
 class Compiler(InstructionSet):

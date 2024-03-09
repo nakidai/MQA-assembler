@@ -1,4 +1,4 @@
-from .asm_types import Token
+from ._asm_types import Token
 
 
 class Tokenizer:
