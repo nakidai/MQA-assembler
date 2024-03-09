@@ -1,2 +1,9 @@
 # Default ignored files
 /.idea/
+
+# Cache
+__pycache__/
+
+# Folders creating when building package
+dist/
+*.egg-info

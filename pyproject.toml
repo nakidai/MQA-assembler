@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mqa"
+description = "Compiler for MQ"
+readme = "README.md"
+dynamic = ["version"]
+authors = [{name = "Qubane"}]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
+]
+
+[project.urls]
+Repository = "https://github.com/UltraQbik/MQA-assembler"
+
+[project.scripts]
+mqa = "mqa:main"

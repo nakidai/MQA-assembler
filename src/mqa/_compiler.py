@@ -1,6 +1,6 @@
-from .tokenizer import Tokenizer
-from .asm_types import *
-from .mqis import *
+from ._tokenizer import Tokenizer
+from ._asm_types import *
+from ._mqis import *
 
 
 class Compiler(InstructionSet):
